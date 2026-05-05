@@ -1,0 +1,268 @@
+basePath: /
+definitions:
+  controllers.createUserRequest:
+    properties:
+      appIds:
+        items:
+          type: string
+        type: array
+      email:
+        type: string
+      mfaEnabled:
+        type: boolean
+      name:
+        type: string
+      password:
+        type: string
+      role:
+        $ref: '#/definitions/domain.Role'
+      status:
+        $ref: '#/definitions/domain.UserStatus'
+    type: object
+  controllers.loginRequest:
+    properties:
+      appId:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  controllers.updateUserRequest:
+    properties:
+      appIds:
+        items:
+          type: string
+        type: array
+      email:
+        type: string
+      mfaEnabled:
+        type: boolean
+      name:
+        type: string
+      password:
+        type: string
+      role:
+        $ref: '#/definitions/domain.Role'
+      status:
+        $ref: '#/definitions/domain.UserStatus'
+    type: object
+  controllers.validateOTPRequest:
+    properties:
+      code:
+        type: string
+      mfaToken:
+        type: string
+    type: object
+  domain.Role:
+    enum:
+    - SUPER_USER
+    - MANAGER
+    - APP_USER
+    type: string
+    x-enum-varnames:
+    - RoleSuperUser
+    - RoleManager
+    - RoleAppUser
+  domain.UserStatus:
+    enum:
+    - active
+    - disabled
+    type: string
+    x-enum-varnames:
+    - UserStatusActive
+    - UserStatusDisabled
+info:
+  contact: {}
+  description: Multi-app backend with auth, MFA (TOTP), and admin APIs.
+  title: Web Manager Backend API
+  version: "1.0"
+paths:
+  /admin/users:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - admin-users
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create user request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create user
+      tags:
+      - admin-users
+  /admin/users/{id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - admin-users
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user by id
+      tags:
+      - admin-users
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update user request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.updateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - admin-users
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: If `mfaEnabled=false`, returns tokens. If `mfaEnabled=true`, returns
+        enrollment QR on first time or OTP required otherwise.
+      parameters:
+      - description: Login request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Login (password step)
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Invalidates refresh tokens for the current user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - auth
+  /auth/otp/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validates OTP using the `mfaToken` returned by `/auth/login` and
+        returns tokens.
+      parameters:
+      - description: OTP validation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.validateOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Validate OTP (TOTP)
+      tags:
+      - auth
+  /health:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health check
+      tags:
+      - health
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
