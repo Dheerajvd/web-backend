@@ -102,6 +102,15 @@ func (c *AuthController) ValidateOTP(ctx *fiber.Ctx) error {
 	}})
 }
 
+// Refresh godoc
+// @Summary Refresh access token
+// @Description Exchanges a valid refresh token for a new access + refresh token pair (refresh rotation).
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body refreshRequest true "Refresh request"
+// @Success 200 {object} map[string]any
+// @Router /auth/refresh [post]
 func (c *AuthController) Refresh(ctx *fiber.Ctx) error {
 	var req refreshRequest
 	if err := ctx.BodyParser(&req); err != nil {

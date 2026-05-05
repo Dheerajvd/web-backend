@@ -19,7 +19,9 @@ const (
 
 // Logical modules for policy. Expand as you add route groups.
 const (
-	ModuleUM = "UM" // user management (/admin/users)
+	ModuleUM        = "UM"      // user management (/admin/users)
+	ModuleWebsite   = "WEBSITE" // website site-data (/website)
+	AppIDWebManager = "web-manager"
 )
 
 // Roles allowed to call DELETE-scoped endpoints.
@@ -30,7 +32,13 @@ var deleteAllowedRoles = []domain.Role{
 
 // moduleForbiddenRoles: if the user's role is listed, the module is denied entirely.
 var moduleForbiddenRoles = map[string][]domain.Role{
-	ModuleUM: {domain.RoleAppUser},
+	ModuleUM:      {domain.RoleAppUser},
+	ModuleWebsite: {domain.RoleAppUser},
+}
+
+// moduleAllowedAppIDs: when set for a module, the JWT appId must be one of these values (including SUPER_USER).
+var moduleAllowedAppIDs = map[string][]string{
+	ModuleWebsite: {AppIDWebManager},
 }
 
 // moduleForbiddenAppIDs: JWT appId must not be in this list for the given module.
@@ -64,9 +72,29 @@ func moduleForbiddenForRole(module string, role domain.Role) bool {
 	return roleInList(role, moduleForbiddenRoles[module])
 }
 
+func appIDAllowedForModule(module, tokenAppID string) bool {
+	tokenAppID = strings.TrimSpace(tokenAppID)
+	if module == "" {
+		return true
+	}
+	allowed, ok := moduleAllowedAppIDs[module]
+	if !ok || len(allowed) == 0 {
+		return true
+	}
+	for _, a := range allowed {
+		if strings.TrimSpace(a) == tokenAppID {
+			return true
+		}
+	}
+	return false
+}
+
 // authScopeError returns a Fiber error if scope rules deny the request; otherwise nil.
-// SUPER_USER bypasses module × appId and module × role restrictions (full access).
+// SUPER_USER bypasses module × role restrictions except moduleAllowedAppIDs (JWT appId must still match when configured).
 func authScopeError(scope AuthScope, role domain.Role, tokenAppID string) *fiber.Error {
+	if !appIDAllowedForModule(scope.Module, tokenAppID) {
+		return fiber.NewError(fiber.StatusForbidden, "this app is not allowed to use this module")
+	}
 	if role == domain.RoleSuperUser {
 		return nil
 	}

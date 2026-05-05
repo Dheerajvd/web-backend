@@ -76,6 +76,7 @@ func NewServer(cfg config.Config, logger *zap.Logger) (*fiber.App, func(), error
 	routes.SetupAuthRoutes(app.Group("/auth"), cfg, mongo, logger, appSettingsProv)
 	routes.SetupLookupRoutes(app.Group("/lookups"), cfg, mongo)
 	routes.SetupAdminRoutes(app.Group("/admin"), cfg, mongo, logger)
+	routes.SetupWebsiteRoutes(app.Group("/website"), cfg, mongo, logger)
 	routes.SetupPublicRoutes(app, cfg, mongo, logger)
 
 	cleanup := func() {

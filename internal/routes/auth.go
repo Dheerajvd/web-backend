@@ -17,5 +17,6 @@ func SetupAuthRoutes(router fiber.Router, cfg config.Config, mongo *db.Mongo, lo
 
 	router.Post("/login", authController.Login)
 	router.Post("/otp/validate", authController.ValidateOTP)
+	router.Post("/refresh", authController.Refresh)
 	router.Post("/logout", middlewares.RequireAuth(authSvc, mongo, middlewares.AuthScope{}), authController.Logout)
 }

@@ -43,6 +43,9 @@ func EnsureIndexes(ctx context.Context, m *Mongo) error {
 	if err := ensureApplicationIDsIndexes(ctx, m.DB.Collection("applicationIDs")); err != nil {
 		return err
 	}
+	if err := ensureSiteDataIndexes(ctx, m.DB.Collection("siteData")); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -204,6 +207,19 @@ func ensureApplicationIDsIndexes(ctx context.Context, col *mongo.Collection) err
 	})
 	if err != nil {
 		return fmt.Errorf("applicationIDs indexes: %w", err)
+	}
+	return nil
+}
+
+func ensureSiteDataIndexes(ctx context.Context, col *mongo.Collection) error {
+	_, err := col.Indexes().CreateMany(ctx, []mongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "name", Value: 1}},
+			Options: options.Index().SetUnique(true).SetName("uniq_name"),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("siteData indexes: %w", err)
 	}
 	return nil
 }
